@@ -1,0 +1,63 @@
+* ExpTracker2
+Track all your experiments.
+I'm using this myself, but its not in a state that I can guarantee it will work for you.
+** E
+META
+DATA
+COMPLETION
+AUTO
+HELPERS
+DIAGNOSTICS
+WRANGLE
+REDO
+DB
+RUN (RUN OBJECT?)
+DATAGEN
+MOD
+LEGACY
+RAND
+
+DIRS
+def
+in
+out
+raw
+meta
+(code)
+
+|      | OPEN | LOAD | CHK | SAVE | FNAME |
+| DEF  | x    |      | x   |      | x     |
+| CODE | x    |      | x   |      | x     |
+| IN   |      | x    | x   | x    | x     |
+| OUT  |      | x    | x   | x    | x     |
+|      |      |      |     |      |       |
+| RAW  |      | x    | x   |      | x     |
+| META |      | x    | *   | x    | *     |
+** EA
+*** Methods
+load_all
+save_all
+check_all
+
+add experiment
+rm experiment
+check_save_mirror_parity
+check_lock
+lock
+unlock
+** DB
+*** properties
+data_mirrors
+DBinfo  (connection etc.)
+*** methods
+fetch
+lock
+unlock
+check_mirror_data_exists
+check_mirror_connection
+
+check_orphaned
+    all data types
+link_data_to_exp
+    all data types
+new_pass
