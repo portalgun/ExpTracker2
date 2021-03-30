@@ -13,10 +13,10 @@ methods
             I.mode=obj.auto_mode(mode);
         end
         if ~exist('std','var')
-            std=[]
+            std=[];
         end
         if ~exist('blk','var')
-            blk=[]
+            blk=[];
         end
 
         [I.ind,I.std,I.blk,I.r1,I.r2,exitflag]=obj.get_next_std_block(I.subj,I.mode,std,blk);
@@ -42,6 +42,7 @@ methods
         end
         std=obj.auto_std_ind(std);
 
+        % XXX DIFF FOR BLK
         k=ismember(obj.indStd,std);
         if exist('std','var') && ~isempty(std)
             cind=(cind==0 & k);
@@ -85,7 +86,7 @@ methods
             [obj,exitflag]=obj.run(subj,[],std,[], 1);
         end
     end
-    function [obj,exitflag] = run(obj,subj, mode,std,blk, bLoop, bTest)
+    function [obj,exitflag] = run(obj,subj, mode,std,blk, bLoop, bTest,S)
         exitflag=0;
         if ~exist('bTest','var') || isempty(bTest)
             bTest=0;
@@ -121,7 +122,14 @@ methods
         end
 
         % TODO check data parity, no overwriting
-        S=obj.load_exp(I.mode,I.std,I.blk);
+
+        if ~bTest || ~exist('S','var') || isempty(S)
+            S=obj.load_exp(I.mode,I.std,I.blk);
+            if bTest
+                assignin('base','Stest',S);
+            end
+        end
+
         Def=obj.load_def('EXP');
 
         obj.save_prj_path();
@@ -220,6 +228,8 @@ methods
     % 0  run
     % -1 error
     % -2 exited
+
+        %assignin('base','S',S);
         ME=[];
         exp=[];
         statusCode=0;
@@ -277,10 +287,10 @@ methods
     end
 %% PATH
     function obj=save_prj_path(obj)
-        obj.lastPrj=pxCur;
+        obj.lastPrj=Px.get_current();
     end
     function obj=restore_prj_path(obj)
-        if ~isempty(obj.lastPrj)
+        if ~isempty(obj.lastPrj) && ~strcmp(Px.get_current(),obj.lastPrj);
             px(obj.lastPrj);
         end
     end
@@ -291,7 +301,9 @@ methods
             fs=filesep;
         end
         dir=sed('s',obj.dir.prjDir,[fs '$'],'');
-        px(dir);
+        if ~strcmp(obj.lastPrj,dir)
+            px(dir);
+        end
     end
 %/
     function obj=wait_exp(obj)
@@ -302,7 +314,6 @@ methods
     function obj=print_exp(obj,I,S)
     % PRINT DATA TO SCREEN
         ename=obj.fnames.CODE.EXP;
-        sfname=obj.get_fname_exp(I.mode,I.std,I.blk);
         dfname=[obj.dir.DEF obj.fnames.DEF.EXP];
 
         subj=obj.auto_subj(I.subj);
@@ -310,10 +321,18 @@ methods
         std=obj.auto_std_str(I.std);
         stdf=obj.auto_std_fld(I.std);
         blk=obj.auto_blk_num(I.blk);
-        nTrial=num2str(S.trlPerRun); % TODO
 
-        sstd=num2str(unique(roundDec(S.stdX,1e-12)));
-        scmp=num2str(length(S.cmpXindUnq));
+        if isa(S,'ptchs')
+            sstd=strrep(num2strSane(S.Blk.get_stdX_unq),',',' ');
+            scmp=strrep(num2strSane(size(S.Blk.get_cmpX_unq,1)),',',' ');
+            nTrial=num2str(S.Blk.get_nTrial);
+            sfname=''; % TODO
+        else
+            nTrial=num2str(obj.nTrl); % TODO
+            sstd=num2str(unique(roundDec(S.stdX,1e-12)));
+            scmp=num2str(length(S.cmpXindUnq));
+            sfname=obj.get_fname_exp(I.mode,I.std,I.blk);
+        end
 
         spc='    ';
         disp([ ...

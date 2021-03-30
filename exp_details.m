@@ -112,6 +112,16 @@ methods
         if isuniform(vals) && ( startsWith(fld,'An') || strcmp(fld,'Asubjs'));
             obj.(fl)=val;
             obj.(flb)=1;
+        elseif isuniform(vals) && endsWith(fld,'stdXunqAll') && iscell(val);
+            val=num2cell(distribute(val{:}));
+            obj.(fl)=val;
+            obj.(fls)=Eobj.stdXunq2string(val);
+            obj.(flb)=1;
+        elseif isuniform(vals) && endsWith(fld,'unqAll') && iscell(val);
+            val=distribute(val{:});
+            obj.(fl)=val;
+            obj.(fls)=strsplit(num2strSane(val),';');
+            obj.(flb)=1;
         elseif isuniform(vals) && endsWith(fld,'unqAll');
             obj.(fl)=val;
             obj.(fls)=strsplit(num2strSane(val),';');

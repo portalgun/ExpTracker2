@@ -3,6 +3,9 @@ methods
     function stds=get_std_nums(obj)
         if isfield(obj.methodVars,'stdXunqAll')
             stds=obj.methodVars.stdXunqAll;
+            if iscell(stds)
+                stds=distribute(stds{:});
+            end
         else
             stds=0;
         end
@@ -10,7 +13,19 @@ methods
     function stds=get_std_flds(obj)
         if isfield(obj.methodVars,'stdXunqAll')
             stds=obj.methodVars.stdXunqAll;
-            stds=num2fldstr(stds);
+            if iscell(stds)
+                stds=distribute(stds{:});
+                s=cell(size(stds));
+                for i = 1:size(stds,2)
+                    s(:,i)=num2fldstr(stds(:,i));
+                end
+                stds=s;
+                if size(stds,2) > 1
+                    stds=strrep(join(stds,2),' ','_');
+                end
+            else
+                stds=num2fldstr(stds);
+            end
         else
             stds='p0';
         end
@@ -63,7 +78,9 @@ methods
 
     end
     function mode=auto_mode_num(obj,mode)
-        if all(isint(mode)) && all(ismember(mode,1:3))
+        if isempty(mode)
+            mode=1;
+        elseif all(isint(mode)) && all(ismember(mode,1:3))
             return
         elseif all(isint(mode))
             error('Mode ind out of bounds')
@@ -93,18 +110,29 @@ methods
     end
     function std=auto_std_fld(obj,std)
         % XXX make more like auto_std_num
-        stds=obj.get_std_nums;
         stdsf=obj.get_std_flds;
+        stds=obj.get_std_nums;
+        if iscell(stds)
+            stds=distribute(stds{:});
+        end
         stdsi=1:length(stds);
         bStds=isfield(obj.methodVars,'stdXunqAll');
         if ~bStds && ((~exist('std','var')  || isempty(std)) || std==1)
             std='p0';
         elseif ischar(std) && ismember(std,stdsf)
             return
-        elseif isnumeric(std) && ismember(std,stds)
+        elseif isnumeric(std) && size(stds,2)> 1 && length(std)==size(stds,1) && ismember(std,stds,'rows')
+            std=num2fldstr(std);
+        elseif isnumeric(std) && size(stds,2)==1 && numel(std)== 1 && ismember(std,stds)
             std=num2fldstr(std);
         elseif isint(std) && ismember(std,stdsi)
-            std=num2fldstr(obj.methodVars.stdXunqAll(std));
+            stdX=obj.methodVars.stdXunqAll;
+            if iscell(stdX)
+                std=join(stdsf(std,:),'_');
+                std=std{1};
+            else
+                std=num2fldstr(stdX(std));
+            end
         elseif isint(std)
             error(['Std index/value out of bounds: ' num2str(std)]);
         elseif isnumeric(std)
@@ -133,12 +161,18 @@ methods
         end
     end
     function std=auto_std_str(obj,std)
-        std=num2str(obj.auto_std_num(std));
+        std=strrep(num2strSane(obj.auto_std_num(std)),',',' ');
+
     end
     function std=auto_std_num(obj,std)
         stds=obj.get_std_nums();
         flds=obj.get_std_flds();
-        if all(isnumeric(std)) && all(ismember(std,stds))
+
+        if iscell(std) && all(ismember(str2double(std),stds))
+            dk
+        elseif all(isint(std)) && all(ismember(std,1:length(stds)))
+            std=stds(std,:);
+        elseif all(isnumeric(std)) && all(ismember(std,stds))
             return
         elseif all(isint(std)) && all(ismember(std,1:length(stds)))
             std=stds(std);
@@ -177,6 +211,14 @@ methods
             return
         end
     end
+    function str=auto_pass_str(obj)
+        if isempty(obj.pass)
+            pass=1;
+        else
+            pass=obj.pass;
+        end
+        str=['pass' num2str(pass)];
+    end
     function str=auto_ind_str(obj)
         str=strrep(num2strSane(obj.prjInd),',','-');
     end
@@ -186,6 +228,15 @@ methods
     function fld=auto_out_fld(obj,fld)
         fld=makeLowerCase(fld);
         fld=strrep(fld,'prunedp','prunedP');
+    end
+end
+methods(Static)
+    function fld=stdXunq2string(val)
+        if iscell(val)
+            fld=strrep(num2strSane(val),',','_');
+        else
+            fld=num2strSane(val);
+        end
     end
 end
 end

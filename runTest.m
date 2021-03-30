@@ -1,6 +1,4 @@
-function obj=runSubj(subj,Aliases,rule,mode,std,blk);
-%function obj=runSubj(subj,optional Aliases,rule,mode,std,blk);
-% Aliases,rule,mode,std,blk and optional
+function obj=runTest(alias,mode,std,blk,S);
     if ~exist('Aliases','var')
         Aliases=[];
     end
@@ -16,8 +14,12 @@ function obj=runSubj(subj,Aliases,rule,mode,std,blk);
     if ~exist('blk','var')
         blk=[];
     end
-    if ~iscell(Aliases) && ~isempty(Aliases)
-        Aliases={Aliases};
+    if ~exist('S','Var')
+        S=[];
     end
-    obj=EAobj.run_loop_all(subj,Aliases,rule,mode,std,blk);
+    if evalin('base','exist(''Stest'',''var'');') 
+        S=evalin('base','Stest;');
+    end
+    obj=Eobj.load(alias);
+    obj.run('DNW',mode,std,blk,0,1,S);
 end

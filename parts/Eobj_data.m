@@ -161,6 +161,7 @@ methods
         end
         name=obj.get_name_exp(mode,std,blk);
         if isempty(name)
+            fname=[];
             return
         end
         fname=[obj.dir.EXP name '.mat'];
@@ -208,7 +209,11 @@ methods
     end
 %%  LOAD
     function Def=load_def(obj,fld)
-        fname=obj.get_fname_def(fld);
+        if obj.bBlk & obj.bPtchs
+            fname=[dbDirs('loc') obj.fnames.DEF.(fld)];
+        else
+            fname=obj.get_fname_def(fld);
+        end
         cur=pwd;
         [path,name]=filePartsSane(fname);
         cd(path);
@@ -267,12 +272,21 @@ methods
         %if out < 1
         %    return
         %end
+        %
+        if obj.bPtchs && obj.bBlk
+            base=dbDirs('base');
+            fname=[base obj.fnames.IN.(['DMP_' makeUpperCase(obj.auto_mode(mode))])];
+            if ~endsWith(fname,'.mat')
+                fname=[fname '.mat'];
+            end
+            load(fname);
+            P.exp_init(obj.alias,obj.auto_mode_num(mode),obj.auto_std_ind(std),blk);
+            out=P;
 
-        % GET FNAME
-        fname=obj.get_fname_exp(mode,std,blk);
-
-        % LOAD
-        out=load(fname);
+        else
+            fname=obj.get_fname_exp(mode,std,blk);
+            out=load(fname);
+        end
 
         while true
             flds=fieldnames(out);
@@ -363,7 +377,7 @@ methods
 
         % LOAD
         if out==0
-            error(['No such file: ' newline '    ' fname])
+            error(['No such file: ' newline '    ' fname]);
         else
             out=load(fname);
         end
@@ -517,8 +531,8 @@ methods
         end
         [codeDB,codeFN,fnameDB,fnameGen]=obj.check_data(0,dType,fld,subj,mode,std,blk);
         if ~strcmp(fnameDB,fnameGen)
-            disp(['save name: ' fnameDB])
-            disp(['gen  name: ' fnameGen])
+            disp(['save name: ' fnameDB]);
+            disp(['gen  name: ' fnameGen]);
             out1=basicYN('These two do not match. Continue saving under gen name?');
             if ~out1
                 out=0;
@@ -645,7 +659,7 @@ methods
         case 'OUT'
             fname=obj.gen_fname_out(fld,subj,mode,std);
         case 'MAP'
-            error('Write code')
+            error('Write code');
         otherwise
             error(['Unhandled type ' dType]);
         end

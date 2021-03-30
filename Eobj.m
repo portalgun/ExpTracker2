@@ -1,4 +1,4 @@
-classdef Eobj < handle & Eobj_auto & Eobj_diag & Eobj_init & Eobj_raw & Eobj_data & Eobj_status & Eobj_wrangle &  Eobj_expRunner & Eobj_psy & Eobj_rename & Eobj_fix & Eobj_import %& Eobj_fix 
+classdef Eobj < handle & Eobj_auto & Eobj_diag & Eobj_init & Eobj_raw & Eobj_data & Eobj_status & Eobj_wrangle &  Eobj_expRunner & Eobj_psy & Eobj_rename & Eobj_fix & Eobj_import
 % TODO
 %% in needs db
 %%
@@ -78,6 +78,8 @@ properties
     language='matlab';
 
     LRSI
+    bPtchs=0
+    bBlk=0
 end
 properties(Hidden = true)
     aliases
@@ -119,6 +121,9 @@ methods
             obj.name=[obj.prjCode '_' expID];
         end
     end
+    function obj=get_name(obj)
+        obj.name=[obj.prjCode '_' obj.imgDTB '_' obj.natORflt '_' obj.imgDim '_' obj.method '_' obj.auto_ind_str() '_' obj.auto_pass_str()];
+    end
     function obj=init(obj,name,prjCode,expID)
         obj.init_dirs();
         obj.dbDir=dbDirs('EXP');
@@ -126,6 +131,7 @@ methods
         if isempty(obj.nTrlPerLvl)
             obj.nTrlPerLvl=obj.nTrl/obj.nCmp;
         end
+        obj.init_subjs_status();
         obj.init_exp_empty_all();
         obj.init_raw_empty_all();
         obj.init_rnd();
@@ -212,7 +218,7 @@ methods
                 alias=[alias repmat(' ',1,N)];
             end
             str=[sprintf('%02d',i) '  ' alias '   ' files{i}];
-            disp(str)
+            disp(str);
         end
         out=basicRange(n,1);
         obj.name=files{out};
@@ -228,7 +234,7 @@ methods
     end
     function nobj=copy_as_new_pass(obj,newpassnum)
         if ~isint(newpassnum)
-            error('newpassnum must be integers')
+            error('newpassnum must be integers');
         end
         newpassnum=num2str(newpassnum);
         nobj=copyObj(obj);
@@ -250,7 +256,7 @@ methods
     end
     function nobj=copy_as_new_ind(obj,a,b)
         if ~isint(a) || ~isint(b)
-            error('prjinds must be integers')
+            error('prjinds must be integers');
         end
         prjInd=strrep(num2strSane([a b]),',','-');
 
@@ -316,8 +322,8 @@ methods(Static=true)
         aliases=readOptsFile([dirn 'aliases.txt']);
     end
     function out=prj_exists(name)
-        dir=dbDirs(['EXP'])
-        out=exist([dir name '.mat'],'file') > 0
+        dir=dbDirs(['EXP']);
+        out=exist([dir name '.mat'],'file') > 0;
     end
     function obj=new(opts)
         opts=parse_opts(opts);
@@ -329,7 +335,7 @@ methods(Static=true)
         for i = 1:numel(flds)
             fld=flds{i};
             if strcmp(fld,'expID'); continue; end
-            obj.(fld)=opts.(fld)
+            obj.(fld)=opts.(fld);
         end
         obj.creationDate=date();
         obj.init();
@@ -366,10 +372,10 @@ methods(Static=true)
         %NATORFLT
 
         if opts.description < 20
-            error('Description to short')
+            error('Description to short');
         end
         if opts.pAuthor < 3  || opts.pAuthor > 3
-            error('Author name must be 3 char initials')
+            error('Author name must be 3 char initials');
         end
         name=Eobj.get_E_name(opts.prjCode,...
                         opts.imgDTB,...
@@ -392,26 +398,26 @@ methods(Static=true)
     end
     function imgDim=parse_imgDim(imgDim)
         if isempty(imgDim)
-            error('imgDim cannot be empty')
+            error('imgDim cannot be empty');
         elseif isnum(imgDim)
             imgDim=str2double(imgDim);
         elseif isalphanum(imgDim) && imgDim(end)=='D'
             imgDim=str2double(imgDim(1:end-1));
         elseif ~isint(imgDim)
-            error('unhandled imgDim dimensions')
+            error('unhandled imgDim dimensions');
         end
         if imgDim > 4
-            error('unhandled imgDim dimensions')
+            error('unhandled imgDim dimensions');
         end
         imgDim=[num2str(imgDim,'%i') 'D'];
     end
     function natORflt=parse_natORflt(natORflt)
         if isempty(natORflt)
-            error('natORflt cannot be empty')
+            error('natORflt cannot be empty');
         end
         natORflt=makeUpper(opts.natORflt);
         if ~ismember(opts.natORflt,{'NAT','FLT'})
-            error('invalid value for natORflt')
+            error('invalid value for natORflt');
         end
     end
     function method=parse_method(method)
@@ -419,17 +425,17 @@ methods(Static=true)
         method=makeUpper(method);
         if regExp(method,'^[1-9][AI]FC$' )
             method=strrep(method,'A','I');
-        elseif ~ismember(method,validMethods)
-            error('invalid method')
+        elseif ~ismember(method,validMethods);
+            error('invalid method');
         end
     end
     function prjInd=parse_prjInd(prjInd)
         if ischar(prjInd) && ~regExp(prjInd,'[1-9]{1}[0-9]*-[1-9]{1}[0-9]*')
-            error('invalid pojectInd')
+            error('invalid pojectInd');
         elseif ~isint (prjInd)
-            error('prjInds must be integers')
+            error('prjInds must be integers');
         elseif ~all(isint(prjInd)) || numel(prjInd) > 2 || isempty(prjInd)
-            error('prjInds must be 1 or 2 integers')
+            error('prjInds must be 1 or 2 integers');
         elseif ischar(prjInd)
             prjInd=str2double(strsplit(prjInd,'-'));
         end
@@ -458,7 +464,7 @@ methods(Static=true)
     end
     function blk=parse_blk(blk)
         if numel(blk) > 1 || isempty(blk)
-            error('blk must be a single integer')
+            error('blk must be a single integer');
         elseif isnumeric(blk) && ~isint(blk)
             error('invalid blk');
         elseif ischar && regexp(blk,'^[0-9]+^')
@@ -467,7 +473,7 @@ methods(Static=true)
     end
     function std=parse_std(std)
         if numel(std) > 1 || isempty(std)
-            error('std must be 1 element')
+            error('std must be 1 element');
         end
     end
     function name=get_base_name(prjCode,imgDTB,natORflt,imgDim,method,prjInd)
@@ -477,7 +483,7 @@ methods(Static=true)
         imgDim   = Eobj.parse_imgDim(imgDim);
         method   = Eobj.parse_method(method);
         prjInd   = Eobj.parse_prjInd(prjInd);
-        prjInd   = strrep(num2strSane(prjInd),',','-')
+        prjInd   = strrep(num2strSane(prjInd),',','-');
 
         parts={ prjCode, imgDTB, natORflt, imgDim, method, prjInd};
         strs=join(parts,'_');

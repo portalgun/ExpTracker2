@@ -1,6 +1,57 @@
 * ExpTracker2
-Track all your experiments.
+Keep track all of your matlab experiment data.
+Now includes data wrangling!
+
 I'm using this myself, but its not in a state that I can guarantee it will work for you.
+** Properties
+| prjCode      | px.get_current();    | x |
+| imgDTB       | D_imap base.database | x |
+| natORflt     | D_blk ???            | x |
+| imgDim       | D_blk ???            | x |
+| method       | D_exp_ expType       | x |
+| prjInd       |                      |   |
+| pass         | auto                 |   |
+| subjs        |                      |   |
+| nStd         | D_blk                | x |
+| nCmp         | D_blk                | x |
+| nBlk         | D_blk                | x |
+| nTrl         | D_blk                | x |
+| nTrlPerBlk   | D_blk                | x |
+| nTrlPerLvl   | D_blk                | x |
+| Xname        | D_blk                | x |
+| Xunit        |                      |   |
+| pAuthor      |                      |   |
+| creationDate | auto                 |   |
+| expHost      |                      |   |
+| description  |                      |   |
+| language     |                      |   |
+
+| methodVars |              |   |   |
+|            | stdXunqAll   |   | x |
+|            | cmpXspacing  | ? |   |
+|            | minDist      | ? |   |
+|            | bUseFeedback | ? |   |
+|            | cmpXunqAll   |   | x |
+|            | stdBlkTable  |   |   |
+|            | cmpXblkTable |   |   |
+|            | cmpIntrvl    |   |   |
+|            | stdIntrvl    |   |   |
+|            | cmpXind      |   |   |
+
+|     |           |      old | default | this              |
+| rnd |           |          |         |                   |
+|     | bBlk      |        1 |         |                   |
+|     | bTrl      |        1 |         |                   |
+|     | master    |       23 |         |                   |
+|     | bSameBlk  |        0 |         |                   |
+|     | blk       |      5x1 |         |                   |
+|     | trl       |   2.9e09 |         |                   |
+|     | cmp       | 71787412 |         |                   |
+|     | intrvl    |      5x5 |         | -1 (already done) |
+|     | blkRndAll |        0 |       0 |                   |
+|     | bCmp      |        1 |         |                   |
+
+rnd from Blk
 ** E
 META
 DATA

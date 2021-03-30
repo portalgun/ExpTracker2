@@ -1,8 +1,19 @@
 classdef Eobj_init < handle
 methods
 %% INIT
-    function obj=init_subj_status(obj)
-        % TODO
+    function obj=init_subjs_status(obj)
+        for i = 1:obj.nSubj
+            subj=obj.subjs{i};
+            if ~isfield(obj.subjStatus,subj)
+                obj.subjStatus.(subj)=struct();
+            end
+            if ~isfield(obj.subjStatus.(subj),'status')
+                obj.subjStatus.(subj).status='';
+            end
+            if ~isfield(obj.subjStatus.(subj),'message')
+                obj.subjStatus.(subj).message='';
+            end
+        end
     end
     function obj=init_flags(obj)
         % TODO
@@ -237,23 +248,40 @@ methods
     end
     function obj=gen_rnd_blk(obj)
         % nblk val to randomize block order
-        rng(obj.rnd.master,'twister');
+        if isstruct(obj.rnd.master)
+            rng(obj.rnd.master.Seed,'twister');
+        else
+            rng(obj.rnd.master,'twister');
+        end
         obj.rnd.blk=randi(2^32-1,obj.nBlk,1);
     end
     function obj=gen_rnd_trl(obj)
         % 1 val to randomize all trials
-        rng(obj.rnd.master,'twister');
+        if isstruct(obj.rnd.master)
+            rng(obj.rnd.master.Seed,'twister');
+        else
+            rng(obj.rnd.master,'twister');
+        end
         val=randi(2^32-1,obj.nBlk+1,1);
         obj.rnd.trl=val(end);
     end
     function obj=gen_rnd_cmp(obj)
-        rng(obj.rnd.master,'twister');
+        if isstruct(obj.rnd.master)
+            rng(obj.rnd.master.Seed,'twister');
+        else
+            rng(obj.rnd.master,'twister');
+        end
         val=randi(2^32-1,obj.nBlk+2,1);
         obj.rnd.cmp=val(end);
     end
     function obj=gen_rnd_intrvl(obj)
         % nStd x nBlk to randomize intervals
-        rng(obj.rnd.master,'twister');
+        if isstruct(obj.rnd.master)
+            rng(obj.rnd.master.Seed,'twister');
+        else
+            rng(obj.rnd.master,'twister');
+        end
+
         randi(2^32-1,obj.nBlk+2,1);
         obj.rnd.intrvl=randi(2^32,obj.nStd,obj.nBlk);
     end
@@ -274,11 +302,22 @@ methods
     function obj=get_blk_table_shuffle(obj)
         n=obj.nStd*obj.nBlk;
         indStd=zeros(n,1);
-        stdXblkTable=zeros(n,1);
-        cmpXblkTable=zeros(n,obj.nCmp);
+        if isfield(obj.methodVars,'stdXunqAll') && iscell(obj.methodVars.stdXunqAll)
+            m=length(obj.methodVars.stdXunqAll);
+            stdXblkTable=zeros(n,m);
+            cmpXblkTable=cell(n,m);
+            cellflag=1;
+        else
+            stdXblkTable=zeros(n,1);
+            cmpXblkTable=zeros(n,obj.nCmp);
+            cellflag=0;
+        end
         for i = 1:obj.nBlk
             ind=transpose((1:obj.nStd)+(obj.nStd*(i-1)));
-            [indStd(ind),stdXblkTable(ind),cmpXblkTable(ind,:)]=obj.get_blk_table_shuffle_blk_ind(i);
+            [inds,std,cmp]=obj.get_blk_table_shuffle_blk_ind(i);
+            indStd(ind)=inds;
+            stdXblkTable(ind,:)=std;
+            cmpXblkTable(ind,:)=cmp;
         end
         obj.indStd=indStd;
         obj.indBlk=repelem(transpose(1:obj.nBlk),obj.nStd,1);
@@ -294,7 +333,22 @@ methods
             ind=datasample(ind,obj.nStd,'Replace',false);
         end
         indStd=ind;
-        if isfield(obj.methodVars,'stdXunqAll')
+        if isfield(obj.methodVars,'stdXunqAll') && iscell(obj.methodVars.stdXunqAll)
+
+            stdX=obj.methodVars.stdXunqAll;
+            cmpX=obj.methodVars.cmpXunqAll;
+            stdX=distribute(stdX{:});
+            stdXblkTable=stdX(ind,:);
+
+            szs=cellfun(@(x) size(x,2),cmpX);
+            cmpX=distribute(cmpX{:});
+            n=size(cmpX,1);
+
+            v=num2cell(szs);
+            a=ones(1,n);
+            cmpX=mat2cell(cmpX,a,szs);
+            cmpXblkTable=cmpX(ind,:);
+        elseif isfield(obj.methodVars,'stdXunqAll')
             stdXblkTable=obj.methodVars.stdXunqAll(ind);
             cmpXblkTable=obj.methodVars.cmpXunqAll(ind,:);
         else
@@ -400,7 +454,7 @@ methods
              ,'nTrlPerBlk'...
              ,'nTrlPerLvl'...
              ,'expHost'...
-             ,'creationData'...
+             ,'creationDate'...
              ,'description'...
              ,'relPapers'...
              ,'language'...
